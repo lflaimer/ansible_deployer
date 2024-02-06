@@ -18,15 +18,7 @@ on:
       version:
         description: App version
         required: true
-      seeds:
-        description: List of seed hosts, separated by comma
-        required: true        
-      peers:
-        description: List of peristent peers, separated by comma
-        required: true
-      command:
-        description: Docker-compose command to be executed 
-        required: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -54,9 +46,9 @@ jobs:
           sed -i -e 's/<node_name>/${{ github.event.inputs.node_name }}/' ./ansible/group_vars/all.yaml
           sed -i -e 's/<network>/${{ github.event.inputs.network }}/' ./ansible/group_vars/all.yaml
           if [ "${{ github.event.inputs.network }}" == "mainnet" ]; then
-            sed -i -e 's/<app_env>/prod/' ./ansible/group_vars/all.yaml
+            sed -i -e 's/<env>/prod/' ./ansible/group_vars/all.yaml
           else
-            sed -i -e 's/<app_env>/test/' ./ansible/group_vars/all.yaml
+            sed -i -e 's/<env>/test/' ./ansible/group_vars/all.yaml
           fi
           sed -i -e 's/<version>/${{ github.event.inputs.version }}/' ./ansible/group_vars/all.yaml
           if [ "${{ github.event.inputs.network }}" == "mainnet" ]; then
@@ -65,7 +57,8 @@ jobs:
             sed -i -e 's/<chain_id>/injective-888/' ./ansible/group_vars/all.yaml
           fi
       
-      - name: Check files
-        run: |
-          cat ./ansible/group_vars/all.yaml
-          cat ./ansible/inventory
+      - name: Create ssh key
+        run: echo ${{ secrets.SECRET_KEY }} >> ~/.ssh/ansible
+      
+      - name: CHeck key
+        run: ls -lah ~/.ssh/
