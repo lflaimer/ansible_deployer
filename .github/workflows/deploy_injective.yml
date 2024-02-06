@@ -58,7 +58,7 @@ jobs:
           fi
       
       - name: Create ssh key
-        run: echo ${{ secrets.SECRET_KEY }} >> ~/.ssh/ansible
+        run: echo "${{ secrets.SECRET_KEY }}" >> ~/.ssh/ansible
       
-      - name: CHeck key
+      - name: Check key
         run: ls -lah ~/.ssh/
