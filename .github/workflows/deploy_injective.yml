@@ -44,7 +44,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install ansible
       
-      - name: Create inventory
+      - name: Edit inventory file
         run: |
           sed -i -e 's/<hosts>/${{ github.event.inputs.node_name }}/' ./ansible/inventory
           sed -i -e 's/<ip_address>/${{ github.event.inputs.ip }}/' ./ansible/inventory
+      
+      - name: Edit variables
+        run: |
+          sed -i -e 's/<node_name>/${{ github.event.inputs.node_name }}/' ./ansible/group_vars/all.yaml
+          sed -i -e 's/<network>/${{ github.event.inputs.network }}/' ./ansible/group_vars/all.yaml
+          if [ "${{ github.event.inputs.network }}" == "mainnet" ]; then
+            sed -i -e 's/<app_env>/prod/' ./ansible/group_vars/all.yaml
+          else
+            sed -i -e 's/<app_env>/test/' ./ansible/group_vars/all.yaml
+          fi
+          sed -i -e 's/<version>/${{ github.event.inputs.version }}/' ./ansible/group_vars/all.yaml
+          if [ "${{ github.event.inputs.network }}" == "mainnet" ]; then
+            sed -i -e 's/<chain_id>/injective-1/' ./ansible/group_vars/all.yaml
+          else
+            sed -i -e 's/<chain_id>/injective-888/' ./ansible/group_vars/all.yaml
+          fi
+      
+      - name: Check files
+        run: |
+          cat ./ansible/group_vars/all.yaml
+          cat ./ansible/inventory
