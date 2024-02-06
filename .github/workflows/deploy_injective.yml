@@ -58,7 +58,11 @@ jobs:
           fi
       
       - name: Create ssh key
-        run: echo "${{ secrets.SECRET_KEY }}" >> ~/.ssh/ansible
+        run: |
+          mkdir ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SECRET_KEY }}" >> ~/.ssh/ansible
+          chmod 600 ~/.ssh/ansible
       
       - name: Check key
         run: ls -lah ~/.ssh/
