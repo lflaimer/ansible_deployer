@@ -1,0 +1,109 @@
+- name: install lz4 packages
+  apt:
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+    name:
+      - lz4
+
+- name: Git pull injective repo
+  ansible.builtin.git:
+    repo: "https://github.com/InjectiveLabs/injective-chain-releases.git"
+    dest: /injective
+
+- name: Create base directories
+  ansible.builtin.file:
+    state: directory
+    path: "/root/injective"
+    mode: '0770'
+
+- name: Create node directories
+  ansible.builtin.file:
+    state: directory
+    path: "/root/injective/{{ item.node_name }}"
+  loop: "{{ injective }}"
+
+- name: For each node, copy files to the node folder
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /injective/
+    dest: /root/injective/{{item.node_name}}/
+  loop: "{{ injective }}"
+
+- name: Prepare variable file and place at the correct repo
+  vars:
+    node: "{{ item.node_name }}"
+    network: "{{ item.network }}"
+    app_env: "{{ item.app_env }}"
+    app_version: "{{ item.app_ver }}"
+    inj_image_tag: "{{ item.inj_image_tag }}"
+    log_level: "{{ item.log_level }}"
+    chain_id: "{{ item.chain_id }}"
+    indexer_cosmos_tls_enabled: "{{ item.indexer_cosmos_tls_enabled }}"
+  template:
+    src: ./env.{{ item.network }}.j2
+    dest: /root/injective/{{ item.node_name }}/docker/.env
+  loop: "{{ injective }}"
+
+- name: Create node directories
+  ansible.builtin.file:
+    state: directory
+    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived"
+  loop: "{{ injective }}"
+
+- name: Create node config directory
+  ansible.builtin.file:
+    state: directory
+    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config"
+  loop: "{{ injective }}"
+
+- name: Download genesis file for each nodes
+  ansible.builtin.get_url:
+    url: "{{ item.genesis }}"
+    dest: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config/genesis.json"
+  loop: "{{ injective }}"
+
+- name: Initialize injective chain
+  command:
+    cmd: docker-compose -f docker-compose.yaml run injective-core injectived init {{ item.node_name }} --chain-id injective-1
+    chdir: "/root/injective/{{ item.node_name }}/docker"
+  loop: "{{ injective }}"
+
+- name: Fetch latest Polkachu image name
+  shell: >
+    curl -H "x-polkachu: injective" https://polkachu.com/api/v2/chain_snapshots/injective/mainnet
+    | jq -r '.'snapshot.name
+  register: image
+
+- name: Download latest Polkachu image file
+  get_url:
+    url: https://snapshots.polkachu.com/snapshots/injective/{{ image.stdout }}
+    dest: "/root/injective/{{ image.stdout }}"
+
+- name: Extract image file for each node
+  shell: > 
+    lz4 -c -d /root/injective/{{ image.stdout }}
+    | tar -x -C /root/injective/{{ item.node_name }}/docker/volumes/.injectived/
+  loop: "{{ injective }}"
+
+- name: Add seeds to config.toml
+  replace:
+    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config/config.toml"
+    regexp: '^seeds =.*'
+    replace: "seeds = \"{{ item.seeds }}\""
+  when: item.seeds is defined
+  loop: "{{ injective }}"
+
+- name: Add peers to config.toml
+  replace:
+    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config/config.toml"
+    regexp: '^persistent_peers =.*'
+    replace: "persistent_peers = \"{{ item.peers }}\""
+  when: item.seeds is defined
+  loop: "{{ injective }}"
+
+- name: Run command
+  command:
+    cmd: "{{ item.command }}"
+    chdir: "/root/injective/{{ item.node_name }}/docker"
+  loop: "{{ injective }}"
