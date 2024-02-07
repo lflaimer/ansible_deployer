@@ -72,4 +72,6 @@ jobs:
 
       
       - name: Run ansible
-        run: ansible-playbook -i ./ansible/inventory  ./ansible/playbook.yml -e "ansible_ssh_timeout=60" --private-key ~/.ssh/ansible -vvvv
+        run: ansible-playbook -i ./ansible/inventory  ./ansible/playbook.yml -e "ansible_ssh_timeout=60" --private-key ~/.ssh/ansible
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: False
