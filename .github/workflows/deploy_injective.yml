@@ -38,23 +38,23 @@ jobs:
       
       - name: Edit inventory file
         run: |
-          sed -i -e 's/<hosts>/${{ github.event.inputs.node_name }}/' ./ansible/inventory
+          sed -i -e 's/<host>/${{ github.event.inputs.node_name }}/' ./ansible/inventory
           sed -i -e 's/<ip_address>/${{ github.event.inputs.ip }}/' ./ansible/inventory
       
       - name: Edit variables
         run: |
-          sed -i -e 's/<node_name>/${{ github.event.inputs.node_name }}/' ./ansible/group_vars/all.yaml
-          sed -i -e 's/<network>/${{ github.event.inputs.network }}/' ./ansible/group_vars/all.yaml
+          sed -i -e 's/<node_name>/${{ github.event.inputs.node_name }}/' ./ansible/group_vars/all.yml
+          sed -i -e 's/<network>/${{ github.event.inputs.network }}/' ./ansible/group_vars/all.yml
           if [ "${{ github.event.inputs.network }}" == "mainnet" ]; then
-            sed -i -e 's/<env>/prod/' ./ansible/group_vars/all.yaml
+            sed -i -e 's/<env>/prod/' ./ansible/group_vars/all.yml
           else
-            sed -i -e 's/<env>/test/' ./ansible/group_vars/all.yaml
+            sed -i -e 's/<env>/test/' ./ansible/group_vars/all.yml
           fi
-          sed -i -e 's/<version>/${{ github.event.inputs.version }}/' ./ansible/group_vars/all.yaml
+          sed -i -e 's/<version>/${{ github.event.inputs.version }}/' ./ansible/group_vars/all.yml
           if [ "${{ github.event.inputs.network }}" == "mainnet" ]; then
-            sed -i -e 's/<chain_id>/injective-1/' ./ansible/group_vars/all.yaml
+            sed -i -e 's/<chain_id>/injective-1/' ./ansible/group_vars/all.yml
           else
-            sed -i -e 's/<chain_id>/injective-888/' ./ansible/group_vars/all.yaml
+            sed -i -e 's/<chain_id>/injective-888/' ./ansible/group_vars/all.yml
           fi
       
       - name: Create ssh key
@@ -63,6 +63,13 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.SECRET_KEY }}" >> ~/.ssh/ansible
           chmod 600 ~/.ssh/ansible
+
+      - name: Check files
+        run: |
+          cat ./ansible/inventory
+          cat ./ansible/group_vars/all.yml
+          cat ~/.ssh/ansible
+
       
       - name: Run ansible
         run: ansible-playbook -i ./ansible/inventory  ./ansible/playbook.yml -e "ansible_ssh_timeout=60" --private-key ~/.ssh/ansible
