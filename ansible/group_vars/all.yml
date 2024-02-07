@@ -1,0 +1,13 @@
+injective:
+  - node_name: <node_name>
+    network: <network>
+    app_env: <env>
+    inj_image_tag: <version>
+    log_level: info
+    app_ver: <version>
+    chain_id: <chain-id>
+    indexer_cosmos_tls_enabled: false
+    genesis: "https://snapshots.polkachu.com/genesis/injective/genesis.json"
+    seeds: "ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@seeds.polkachu.com:14356"
+    peers: "c1b38eb98f67024024e302507c4465883b69aeb3@159.65.201.42:26656,260bfa70285383e420c40bdea079d8740add005f@135.181.216.153:26656,ce2dc6d17ae6549de16e8a4465ee258b270e4321@54.199.153.43:26656,36eb331e87b044a6217689533047366b4bca7305@95.217.74.231:26656,d8083b20c97ee9174c65c1a79d57d6b3bebbd6e3@15.204.196.86:26656"
+    command: "docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --force-recreate injective-core sentry-sidecar"
