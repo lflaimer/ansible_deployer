@@ -48,15 +48,9 @@
     state: directory
     path: "/root/injective/docker/volumes/.injectived/config"
 
-- name: Download genesis file for each nodes
-  ansible.builtin.get_url:
-    url: "{{ item.genesis }}"
-    dest: "/root/injective/docker/volumes/.injectived/config/genesis.json"
-  loop: "{{ injective }}"
-
 - name: Initialize injective chain
   command:
-    cmd: docker-compose -f docker-compose.yaml run injective-core injectived init {{ item.node_name }} --chain-id injective-1
+    cmd: docker-compose -f docker-compose.yaml run injective-core injectived init {{ item.node_name }} --chain-id injective-1 --overwrite
     chdir: "/root/injective/docker"
   loop: "{{ injective }}"
 
