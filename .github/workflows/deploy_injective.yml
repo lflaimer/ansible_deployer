@@ -64,13 +64,6 @@ jobs:
           echo "${{ secrets.SECRET_KEY }}" >> ~/.ssh/ansible
           chmod 600 ~/.ssh/ansible
 
-      - name: Check files
-        run: |
-          cat ./ansible/inventory
-          cat ./ansible/group_vars/all.yml
-          cat ~/.ssh/ansible
-
-      
       - name: Run ansible
         run: ansible-playbook -i ./ansible/inventory  ./ansible/playbook.yml -e "ansible_ssh_timeout=60" --private-key ~/.ssh/ansible
         env:

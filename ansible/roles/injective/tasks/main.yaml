@@ -36,6 +36,7 @@
   template:
     src: ./env.{{ item.network }}.j2
     dest: /root/injective/docker/.env
+  loop: "{{ injective }}"
 
 - name: Create node directories
   ansible.builtin.file:
@@ -51,11 +52,13 @@
   ansible.builtin.get_url:
     url: "{{ item.genesis }}"
     dest: "/root/injective/docker/volumes/.injectived/config/genesis.json"
+  loop: "{{ injective }}"
 
 - name: Initialize injective chain
   command:
     cmd: docker-compose -f docker-compose.yaml run injective-core injectived init {{ item.node_name }} --chain-id injective-1
     chdir: "/root/injective/docker"
+  loop: "{{ injective }}"
 
 - name: Fetch latest Polkachu image name
   shell: >
@@ -79,6 +82,7 @@
     regexp: '^seeds =.*'
     replace: "seeds = \"{{ item.seeds }}\""
   when: item.seeds is defined
+  loop: "{{ injective }}"
 
 - name: Add peers to config.toml
   replace:
@@ -86,8 +90,10 @@
     regexp: '^persistent_peers =.*'
     replace: "persistent_peers = \"{{ item.peers }}\""
   when: item.seeds is defined
+  loop: "{{ injective }}"
 
 - name: Run command
   command:
     cmd: "{{ item.command }}"
     chdir: "/root/injective/docker"
+  loop: "{{ injective }}"  
