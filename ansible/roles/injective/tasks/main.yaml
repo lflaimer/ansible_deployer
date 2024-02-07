@@ -17,18 +17,11 @@
     path: "/root/injective"
     mode: '0770'
 
-- name: Create node directories
-  ansible.builtin.file:
-    state: directory
-    path: "/root/injective/{{ item.node_name }}"
-  loop: "{{ injective }}"
-
 - name: For each node, copy files to the node folder
   ansible.builtin.copy:
     remote_src: yes
     src: /injective/
-    dest: /root/injective/{{item.node_name}}/
-  loop: "{{ injective }}"
+    dest: /root/injective/
 
 - name: Prepare variable file and place at the correct repo
   vars:
@@ -42,32 +35,27 @@
     indexer_cosmos_tls_enabled: "{{ item.indexer_cosmos_tls_enabled }}"
   template:
     src: ./env.{{ item.network }}.j2
-    dest: /root/injective/{{ item.node_name }}/docker/.env
-  loop: "{{ injective }}"
+    dest: /root/injective/docker/.env
 
 - name: Create node directories
   ansible.builtin.file:
     state: directory
-    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived"
-  loop: "{{ injective }}"
+    path: "/root/injective/docker/volumes/.injectived"
 
 - name: Create node config directory
   ansible.builtin.file:
     state: directory
-    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config"
-  loop: "{{ injective }}"
+    path: "/root/injective/docker/volumes/.injectived/config"
 
 - name: Download genesis file for each nodes
   ansible.builtin.get_url:
     url: "{{ item.genesis }}"
-    dest: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config/genesis.json"
-  loop: "{{ injective }}"
+    dest: "/root/injective/docker/volumes/.injectived/config/genesis.json"
 
 - name: Initialize injective chain
   command:
     cmd: docker-compose -f docker-compose.yaml run injective-core injectived init {{ item.node_name }} --chain-id injective-1
-    chdir: "/root/injective/{{ item.node_name }}/docker"
-  loop: "{{ injective }}"
+    chdir: "/root/injective/docker"
 
 - name: Fetch latest Polkachu image name
   shell: >
@@ -83,27 +71,23 @@
 - name: Extract image file for each node
   shell: > 
     lz4 -c -d /root/injective/{{ image.stdout }}
-    | tar -x -C /root/injective/{{ item.node_name }}/docker/volumes/.injectived/
-  loop: "{{ injective }}"
+    | tar -x -C /root/injective/docker/volumes/.injectived/
 
 - name: Add seeds to config.toml
   replace:
-    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config/config.toml"
+    path: "/root/injective/docker/volumes/.injectived/config/config.toml"
     regexp: '^seeds =.*'
     replace: "seeds = \"{{ item.seeds }}\""
   when: item.seeds is defined
-  loop: "{{ injective }}"
 
 - name: Add peers to config.toml
   replace:
-    path: "/root/injective/{{ item.node_name }}/docker/volumes/.injectived/config/config.toml"
+    path: "/root/injective/docker/volumes/.injectived/config/config.toml"
     regexp: '^persistent_peers =.*'
     replace: "persistent_peers = \"{{ item.peers }}\""
   when: item.seeds is defined
-  loop: "{{ injective }}"
 
 - name: Run command
   command:
     cmd: "{{ item.command }}"
-    chdir: "/root/injective/{{ item.node_name }}/docker"
-  loop: "{{ injective }}"
+    chdir: "/root/injective/docker"
