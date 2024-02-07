@@ -1,0 +1,6 @@
+- name: Deploy indexer hosts at OVH
+  hosts: dynamic
+  roles:
+   - injective.base
+   - injective.docker
+   - injective.injective
